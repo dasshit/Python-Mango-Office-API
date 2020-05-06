@@ -396,3 +396,10 @@ class MangoAPI:
             return self.request(data, '/bwlists/number/add/')
         else:
             return 'Specify number'
+
+    def bwlist_del(self, num_id=None):
+        if num_id != None:
+            data = {'number_id':num_id}
+            return self.request(data, '/bwlists/number/delete/')
+        else:
+            return 'Specify number'
