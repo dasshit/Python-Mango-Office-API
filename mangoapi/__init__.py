@@ -36,9 +36,16 @@ class MangoAPI:
                         'sign': hash(stringified, self),
                         'json': stringified}
             headers = {'Content-type': 'application/x-www-form-urlencoded'}
-            return requests.post((self.url + api_command),
-                                    data=params,
-                                    headers=headers).text
+            if api_command == '/stats/result':
+                return requests.post((self.url + api_command),
+                                        data=params,
+                                        headers=headers).text
+            else:
+                return json.loads(requests.post((self.url + api_command),
+                                        data=params,
+                                        headers=headers).text)
+            
+            
     def sms(self, command_id=None, from_ext=None, text='Test', number=None, sender=None):
         if number == None:
             return 'Please, specify number'
@@ -325,3 +332,11 @@ class MangoAPI:
                         tier = {'operator_extension':operator_extension}
                         data.update(tier)
         return self.request(data, '/groups')
+    
+    def balance(self):
+        data = {}
+        return self.request(data, '/account/balance')
+    
+    def lines(self):
+        data = {}
+        return self.request(data, '/incominglines')
