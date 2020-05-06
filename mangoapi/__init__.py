@@ -403,3 +403,10 @@ class MangoAPI:
             return self.request(data, '/bwlists/number/delete/')
         else:
             return 'Specify number'
+    
+    def campaign_info(self, campaign_id=None):
+        if campaign_id!=None:
+            data = {'campaign_id':campaign_id}
+            return self.request(data, '/campaign')
+        else:
+            return 'Specify campaign id'
