@@ -11,7 +11,7 @@ API wrapper для ВАТС Mango Office
 ```
 * Установка через pip (рекомендуется):
 ```
-$ pip install Python-Mango-Office-API==3.7.0
+$ pip install Python-Mango-Office-API
 ```
 * Установка из источника (нужен git):
 ```
