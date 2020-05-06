@@ -365,3 +365,12 @@ class MangoAPI:
         else:
             return 'Specify params'
         return self.request(data, '/schema/set/')
+            
+        
+    def roles(self):
+        data = {}
+        return self.request(data, '/roles')
+    
+    def sips_list(self):
+        data = {}
+        return self.request(data, '/sips')
