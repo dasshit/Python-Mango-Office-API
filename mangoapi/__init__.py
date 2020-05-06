@@ -321,6 +321,25 @@ class MangoAPI:
             tier = {'extension':extension}
             data.update(tier)
         return self.request(data, 'config/users/request')
+    
+    def user_add(self, name=None, email=None, mobile=None, department=None, position=None, login=None, password=None, use_status=None, use_cc_numbers=None,
+                access_role_id=None, extension=None, line_id=None, trunk_number_id=None, dial_alg=None, numbers=None):
+        data = {'name':name, 'email':email, 'mobile':mobile, 'department':department, 'position':position, 'login':login, 'password':password,
+               'use_status':use_status, 'use_cc_numbers':use_cc_numbers, 'access_role_id':access_role_id, 'extension':extension,
+               'line_id':line_id, 'trunk_number_id':trunk_number_id, 'dial_alg':dial_alg, 'numbers':numbers}
+        return self.request(data, 'member/create')
+    
+    def user_upd(self, user_id=None, name=None, email=None, mobile=None, department=None, position=None, login=None, password=None, use_status=None, use_cc_numbers=None,
+                access_role_id=None, extension=None, line_id=None, trunk_number_id=None, dial_alg=None, numbers=None):
+        data = {'user_id':user_id, 'name':name, 'email':email, 'mobile':mobile, 'department':department, 'position':position, 'login':login, 'password':password,
+               'use_status':use_status, 'use_cc_numbers':use_cc_numbers, 'access_role_id':access_role_id, 'extension':extension,
+               'line_id':line_id, 'trunk_number_id':trunk_number_id, 'dial_alg':dial_alg, 'numbers':numbers}
+        return self.request(data, 'member/update')
+    
+    
+    def user_del(self, user_id):
+        data = {'user_id':user_id}
+        return self.request(data, 'member/delete')
         
     def group_list(self, group_id=None, operator_id=None, operator_extension=None, show_users=1):
         data = {'show_users':show_users}
@@ -339,6 +358,22 @@ class MangoAPI:
                         tier = {'operator_extension':operator_extension}
                         data.update(tier)
         return self.request(data, 'groups')
+    
+    def group_add(self, name=None, description=None, extension=None, dial_alg_group=None, dial_alg_users=None, auto_redirect=None, auto_dial=None,
+                 line_id=None, use_dynamic_ivr=None, use_dynamic_seq_num=None, melody_id=None, operators=None):
+        data = {'name':name, 'description':description, 'extension':extension, 'dial_alg_group':dial_alg_group, 'dial_alg_users':dial_alg_users, 'auto_redirect':auto_redirect, 
+               'auto_dial':auto_dial, 'line_id':line_id, 'use_dynamic_ivr':use_dynamic_ivr, 'use_dynamic_seq_num':use_dynamic_seq_num,'melody_id':melody_id, 'operators':operators}
+        return self.request(data, 'group/create')
+    
+    def group_upd(self, group_id=None, name=None, description=None, extension=None, dial_alg_group=None, dial_alg_users=None, auto_redirect=None, auto_dial=None,
+                 line_id=None, use_dynamic_ivr=None, use_dynamic_seq_num=None, melody_id=None, operators=None):
+        data = {'name':name, 'description':description, 'extension':extension, 'dial_alg_group':dial_alg_group, 'dial_alg_users':dial_alg_users, 'auto_redirect':auto_redirect, 
+               'auto_dial':auto_dial, 'line_id':line_id, 'use_dynamic_ivr':use_dynamic_ivr, 'use_dynamic_seq_num':use_dynamic_seq_num,'melody_id':melody_id, 'operators':operators}
+        return self.request(data, 'group/update')
+    
+    def group_del(self, group_id):
+        data = {'group_id':group_id}
+        return self.request(data, 'group/delete')
     
     def balance(self):
         data = {}
@@ -382,6 +417,33 @@ class MangoAPI:
         data = {}
         return self.request(data, 'sips')
     
+    def sip_add(self, user_id=None, password=None, login=None, domain=None, description=None):
+        if user_id!=None and password!=None:
+            data = {'user_id':user_id, 'password':password}
+            if login!=None and domain!=None:
+                tier = {'login':login, 'domain':domain}
+                data.update(tier)
+            if description!=None:
+                tier = {'description':description}
+                data.update(tier)
+            return self.request(data, 'sip/create')
+        else:
+            return 'Specify params'
+    
+    def sip_edit(self, sip_id=None, user_id=None, password=None, login=None, domain=None, description=None):
+        if sip_id!=None:
+            if user_id!=None and password!=None:
+                data = {'sip_id':sip_id,'user_id':user_id, 'password':password}
+                if login!=None and domain!=None:
+                    tier = {'login':login, 'domain':domain}
+                    data.update(tier)
+                if description!=None:
+                    tier = {'description':description}
+                    data.update(tier)
+                return self.request(data, 'sip/update')
+        else:
+            return 'Specify params'
+    
     def domains_list(self):
         data = {}
         return self.request(data, 'domains')
@@ -414,9 +476,40 @@ class MangoAPI:
     def campaign_info(self, campaign_id=None):
         if campaign_id!=None:
             data = {'campaign_id':campaign_id}
-            return self.request(data, '/campaign')
+            return self.request(data, 'campaign')
         else:
             return 'Specify campaign id'
+        
+        
+    def camp_task_info(self, task_id=None):
+        data = {'task_id':task_id}
+        return self.request(data, 'task')
+    
+    def camp_task_add(self, campaign_id=None, tasks=None):
+        data = {'tasks':tasks}
+        return self.request(data, 'tasks/push')
+    
+    def campaign_start(self, campaign_id=None):
+        if campaign_id!=None:
+            data = {'campaign_id':campaign_id}
+            return self.request(data, 'campaign/start')
+        else:
+            return 'Specify campaign id'
+        
+    def campaign_stop(self, campaign_id=None):
+        if campaign_id!=None:
+            data = {'campaign_id':campaign_id}
+            return self.request(data, 'campaign/stop')
+        else:
+            return 'Specify campaign id'
+        
+    def campaign_del(self, campaign_id=None):
+        if campaign_id!=None:
+            data = {'campaign_id':campaign_id}
+            return self.request(data, 'campaign/delete')
+        else:
+            return 'Specify campaign id'
+    
     def record_meth_get(self, record_id):
         timestamp = str(int(time.time()) + 10800)
         sign = hash2(record_id, timestamp, self.key, self.salt)
