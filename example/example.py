@@ -32,3 +32,40 @@ api.get_stats_to(to_ext='66613', date_from=1583020800, date_to=1585609200, field
 api.get_stats_from(from_ext='66613', date_from=1583020800, date_to=1585609200, fields="records, start, finish, answer, from_extension, from_number, to_extension,to_number, disconnect_reason, line_number, location, create, entry_id")  # Получение статистики исходящих для указанного абонента
 
 api.get_stats_call_party(call_party_ext='66613', date_from=1583020800, date_to=1585609200, fields="records, start, finish, answer, from_extension, from_number, to_extension,to_number, disconnect_reason, line_number, location, create, entry_id")  # Получение статистики всех вызовов для указанного абонента
+
+api.dct_user_info(number='8 (495) 149-5361') # Получение меток ДКТ
+
+api.dct_user_history(number='8 (495) 149-5361') # Получение истории переходов пользователя
+
+listt = ["general.user_id","general.sips","groups","general.access_role_id","telephony.dial_alg","telephony.numbers.schedule","telephony.line_id","telephony.trunk_number_id","general.mobile","general.login","general.use_status","general.use_cc_numbers"]
+result = api.user_list(ext_fields=listt) # Получение списка сотрудников
+
+api.group_list(group_id='11863903', operator_id='400741444') # Получение списка групп
+
+api.balance() # Получение баланса
+
+api.lines() # Получение исходящих линий
+
+api.audio() # Получение списка аудиозаписей
+
+api.schemas(ext_fields=1) # Получение списка схем
+
+api.set_schema(schema=10426699, line=400741445) # Установка схемы на номере
+
+api.roles() # Получение списка ролей
+
+api.sips_list() # Получение списка sip-учеток
+
+api.domains_list() # Получения списка доменов
+
+api.trunk_num_list() # Получение списка номеров из транков
+
+api.bwlist_state() # Статус ЧБ списка
+
+api.bwlist_nums() # Получение списка номеров в ЧБ списке
+
+api.bwlist_add(number='79123124123') # Добавление номера в ЧБ
+
+api.bwlist_del(10660389) # Удаление номера из ЧБ списка
+
+api.campaign_info(campaign_id=12312) # Получение информации о кампании ИО
