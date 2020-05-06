@@ -374,3 +374,25 @@ class MangoAPI:
     def sips_list(self):
         data = {}
         return self.request(data, '/sips')
+    
+    def domains_list(self):
+        data = {}
+        return self.request(data, '/domains')
+    
+    def trunk_num_list(self):
+        data = {}
+        return self.request(data, '/trunks/numbers')
+    
+    def bwlist_state(self):
+        data = {}
+        return self.request(data, '/bwlists/state/')
+    
+    def bwlist_nums(self):
+        data = {}
+        return self.request(data, '/bwlists/numbers/')
+    def bwlist_add(self, number=None, list_type='black', num_type='tel', comment='API'):
+        if number != None:
+            data = {'number':number,'list_type':list_type, 'number_type':num_type, 'comment':comment}
+            return self.request(data, '/bwlists/number/add/')
+        else:
+            return 'Specify number'
