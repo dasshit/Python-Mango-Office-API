@@ -340,3 +340,28 @@ class MangoAPI:
     def lines(self):
         data = {}
         return self.request(data, '/incominglines')
+    
+    
+    def audio(self):
+        data = {}
+        return self.request(data, '/audiofiles')
+    
+    def schemas(self, ext_fields=0):
+        if ext_fields!=0:
+            data = {'ext_fields':['trunks_numbers']}
+        else:
+            data = {}
+        return self.request(data, '/schemas/')
+    
+    def set_schema(self, line=None, trunk=None, schema=None):
+        if schema !=None and (line != None or schema != None):
+            data = {'schema_id':schema}
+            if line != None:
+                tier = {'line_id':line}
+                data.update(tier)
+            elif trunk != None:
+                tier = {'trunk_number_id':trunk}
+                data.update(tier)
+        else:
+            return 'Specify params'
+        return self.request(data, '/schema/set/')
