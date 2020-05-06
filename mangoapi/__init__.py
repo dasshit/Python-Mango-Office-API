@@ -38,7 +38,7 @@ class MangoAPI:
                         'sign': hash(stringified, self),
                         'json': stringified}
             headers = {'Content-type': 'application/x-www-form-urlencoded'}
-            if api_command == '/stats/result':
+            if api_command == 'stats/result':
                 return requests.post((self.url + api_command),
                                         data=params,
                                         headers=headers).text
@@ -47,6 +47,7 @@ class MangoAPI:
                                         data=params,
                                         headers=headers)
             else:
+                print(self.url + api_command)
                 return json.loads(requests.post((self.url + api_command),
                                         data=params,
                                         headers=headers).text)
@@ -70,7 +71,7 @@ class MangoAPI:
             if sender != None:
                 tier = {"sms_sender":sender}
                 data.update(tier)
-            return self.request(data, '/commands/sms')
+            return self.request(data, 'commands/sms')
     
     def callback(self, command_id=None, from_ext=None, from_num=None, to_num=None, line=None, sip_head=None):
         if from_ext == None:
@@ -97,7 +98,7 @@ class MangoAPI:
         if sip_head != None:
             tier = {"sip_headers": sip_head}
             data.update(tier)
-        return self.request(data, '/commands/callback')
+        return self.request(data, 'commands/callback')
             
                 
     def group_callback(self, command_id=None, from_ext=None, to_num=None, line=None):
@@ -118,7 +119,7 @@ class MangoAPI:
         if line != None:
             tier = {"line_number" : line}
             data.update(tier)
-        return self.request(data, '/commands/callback_group')
+        return self.request(data, 'commands/callback_group')
     
     def hangup(self, command_id=None, call_id=None):
         if command_id == None:
@@ -127,7 +128,7 @@ class MangoAPI:
             return 'Please specify call_id'
         else:
             data = {'command_id':command_id, 'call_id':call_id}
-            return self.request(data, '/commands/call/hangup')
+            return self.request(data, 'commands/call/hangup')
         
     def start_record(self, command_id=None, call_id=None, call_party_number=None):
         if command_id == None:
@@ -141,7 +142,7 @@ class MangoAPI:
                 data.update(tier)
             else:
                 return 'Please specify call_party_number'
-            return self.request(data, '/commands/recording/start')
+            return self.request(data, 'commands/recording/start')
     
     def start_play(self, command_id=None, call_id=None, after_play_time=None, internal_id=None):
         if command_id == None:
@@ -156,7 +157,7 @@ class MangoAPI:
             if internal_id != None:
                 tier = {'internal_id':internal_id}
                 data.update(tier)
-            return self.request(data, '/commands/play/start')
+            return self.request(data, 'commands/play/start')
         
     def route(self, command_id=None, call_id=None, to_number=None, sip_headers=None):
         if command_id == None:
@@ -175,7 +176,7 @@ class MangoAPI:
                 if sip_headers!=None:
                     tier = {'sip_headers':sip_headers}
                     data.update(tier)
-                return self.request(data, '/commands/route')
+                return self.request(data, 'commands/route')
             
     def transfer(self, command_id=None, call_id=None, to_number=None, initiator=None, method=None):
         if command_id == None:
@@ -193,7 +194,7 @@ class MangoAPI:
             if initiator!=None:
                 tier = {'initiator':initiator}
                 data.update(tier)
-            return self.request(data, '/commands/transfer')
+            return self.request(data, 'commands/transfer')
         
     def get_stats_from(self, request_id=None, from_ext=None, from_num=None, date_from=None, date_to=None, fields=None):
         if date_from != None and date_to!=None and (from_ext!=None or from_num!=None):
@@ -211,7 +212,7 @@ class MangoAPI:
             if request_id!=None:
                 tier = {'request_id':request_id}
                 data.update(tier)
-            result = json.loads(self.request(data, '/stats/request'))
+            result = json.loads(self.request(data, 'stats/request'))
             data = {}
             if request_id!=None:
                 tier = {'request_id':request_id}
@@ -223,7 +224,7 @@ class MangoAPI:
             except KeyError:
                 return 'Error'
             finally:
-                return self.request(data, '/stats/result')
+                return self.request(data, 'stats/result')
         else:
             return 'Please specify params'
             
@@ -243,7 +244,7 @@ class MangoAPI:
             if request_id!=None:
                 tier = {'request_id':request_id}
                 data.update(tier)
-            result = json.loads(self.request(data, '/stats/request'))
+            result = self.request(data, 'stats/request')
             data = {}
             if request_id!=None:
                 tier = {'request_id':request_id}
@@ -255,7 +256,7 @@ class MangoAPI:
             except KeyError:
                 return 'Error'
             finally:
-                return self.request(data, '/stats/result')
+                return self.request(data, 'stats/result')
         else:
             return 'Please specify params'
         
@@ -275,7 +276,7 @@ class MangoAPI:
             if request_id!=None:
                 tier = {'request_id':request_id}
                 data.update(tier)
-            result = json.loads(self.request(data, '/stats/request'))
+            result = json.loads(self.request(data, 'stats/request'))
             data = {}
             if request_id!=None:
                 tier = {'request_id':request_id}
@@ -287,7 +288,7 @@ class MangoAPI:
             except KeyError:
                 return 'Error'
             finally:
-                return self.request(data, '/stats/result')
+                return self.request(data, 'stats/result')
         else:
             return 'Please specify params'
         
@@ -297,7 +298,7 @@ class MangoAPI:
                 data = {"number": number}
             else:
                 return 'Wrong info type'
-            return self.request(data, '/queries/user_info_by_dct_number/')
+            return self.request(data, 'queries/user_info_by_dct_number/')
         else:
             return 'Please specify number'
         
@@ -307,7 +308,7 @@ class MangoAPI:
                 data = {"number": number}
             else:
                 return 'Wrong info type'
-            return self.request(data, '/queries/user_history_by_dct_number/')
+            return self.request(data, 'queries/user_history_by_dct_number/')
         else:
             return 'Please specify number'
     
@@ -319,12 +320,12 @@ class MangoAPI:
         if extension!=None:
             tier = {'extension':extension}
             data.update(tier)
-        return self.request(data, '/config/users/request')
+        return self.request(data, 'config/users/request')
         
     def group_list(self, group_id=None, operator_id=None, operator_extension=None, show_users=1):
         data = {'show_users':show_users}
         if group_id==None and operator_id==None and operator_extension==None:
-            return self.request(data, '/groups')
+            return self.request(data, 'groups')
         else:
             if group_id!=None:
                 tier = {'group_id':group_id}
@@ -337,27 +338,27 @@ class MangoAPI:
                     if operator_extension!=None:
                         tier = {'operator_extension':operator_extension}
                         data.update(tier)
-        return self.request(data, '/groups')
+        return self.request(data, 'groups')
     
     def balance(self):
         data = {}
-        return self.request(data, '/account/balance')
+        return self.request(data, 'account/balance')
     
     def lines(self):
         data = {}
-        return self.request(data, '/incominglines')
+        return self.request(data, 'incominglines')
     
     
     def audio(self):
         data = {}
-        return self.request(data, '/audiofiles')
+        return self.request(data, 'audiofiles')
     
     def schemas(self, ext_fields=0):
         if ext_fields!=0:
             data = {'ext_fields':['trunks_numbers']}
         else:
             data = {}
-        return self.request(data, '/schemas/')
+        return self.request(data, 'schemas/')
     
     def set_schema(self, line=None, trunk=None, schema=None):
         if schema !=None and (line != None or schema != None):
@@ -370,43 +371,43 @@ class MangoAPI:
                 data.update(tier)
         else:
             return 'Specify params'
-        return self.request(data, '/schema/set/')
+        return self.request(data, 'schema/set/')
             
         
     def roles(self):
         data = {}
-        return self.request(data, '/roles')
+        return self.request(data, 'roles')
     
     def sips_list(self):
         data = {}
-        return self.request(data, '/sips')
+        return self.request(data, 'sips')
     
     def domains_list(self):
         data = {}
-        return self.request(data, '/domains')
+        return self.request(data, 'domains')
     
     def trunk_num_list(self):
         data = {}
-        return self.request(data, '/trunks/numbers')
+        return self.request(data, 'trunks/numbers')
     
     def bwlist_state(self):
         data = {}
-        return self.request(data, '/bwlists/state/')
+        return self.request(data, 'bwlists/state/')
     
     def bwlist_nums(self):
         data = {}
-        return self.request(data, '/bwlists/numbers/')
+        return self.request(data, 'bwlists/numbers/')
     def bwlist_add(self, number=None, list_type='black', num_type='tel', comment='API'):
         if number != None:
             data = {'number':number,'list_type':list_type, 'number_type':num_type, 'comment':comment}
-            return self.request(data, '/bwlists/number/add/')
+            return self.request(data, 'bwlists/number/add/')
         else:
             return 'Specify number'
 
     def bwlist_del(self, num_id=None):
         if num_id != None:
             data = {'number_id':num_id}
-            return self.request(data, '/bwlists/number/delete/')
+            return self.request(data, 'bwlists/number/delete/')
         else:
             return 'Specify number'
     
@@ -429,3 +430,18 @@ class MangoAPI:
     def record_meth_post(self, record_id):
         data = {'recording_id':record_id, 'action':'download'}
         return self.request(data, 'queries/recording/post/').url
+    
+    def speech2text(self, record_id=None, with_terms=None, with_names=None):
+        if record_id != None:
+            result = '[\"' + record_id + '\"]'
+            data = {"recording_id":result}
+            if with_terms!=None:
+                tier = {'with_terms':True}
+                data.update(tier)
+            if with_names!=None:
+                tier = {'with_names':True}
+                data.update(tier)       
+            print(data)
+            return self.request(data, 'queries/recording_categories/')
+        else:
+            return 'Specify params'
