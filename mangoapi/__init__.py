@@ -11,6 +11,8 @@ def hash(data, self):
 def stringify(data):
     return json.dumps(data, separators=(',', ':'))
 
+
+
 class MangoAPI:
     
     def __init__(self, api_url, key, salt):
@@ -40,6 +42,10 @@ class MangoAPI:
                 return requests.post((self.url + api_command),
                                         data=params,
                                         headers=headers).text
+            elif api_command == 'queries/recording/post/':
+                return requests.post((self.url + api_command),
+                                        data=params,
+                                        headers=headers)
             else:
                 return json.loads(requests.post((self.url + api_command),
                                         data=params,
@@ -410,3 +416,16 @@ class MangoAPI:
             return self.request(data, '/campaign')
         else:
             return 'Specify campaign id'
+    def record_meth_get(self, record_id):
+        timestamp = str(int(time.time()) + 10800)
+        sign = hash2(record_id, timestamp, self.key, self.salt)
+        url = self.url + 'queries/recording/link/' + record_id + '/download/' + self.key + '/' + str(timestamp) + '/' + hashlib.sha256(self.key.encode('utf-8') +
+                            timestamp.encode('utf-8') +
+                            record_id.encode('utf-8') +
+                            self.salt.encode('utf-8')).hexdigest()
+        result = requests.get(url)
+        return result.url
+    
+    def record_meth_post(self, record_id):
+        data = {'recording_id':record_id, 'action':'download'}
+        return self.request(data, 'queries/recording/post/').url
