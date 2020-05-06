@@ -485,6 +485,17 @@ class MangoAPI:
         data = {'task_id':task_id}
         return self.request(data, 'task')
     
+    def campaign_add(self, name=None, line_id=None, created_by=None, priority=None, start_date=None, end_date=None, schedule=None, operators=None, dial_mode=None,
+                    voice_message_id=None, hold_message_id=None, max_redial_count_if_busy=None, max_redial_count_if_no_answ=None, max_redial_count_if_number_not_avail=None,
+                    max_wait_time=None, additional_calls_coefficient=None, wait_time_if_busy=None, wait_time_if_no_answ=None, wait_time_if_number_not_avail=None, 
+                    after_call_processing=None):
+        data = {'name':name, 'line_id':line_id, 'created_by':created_by, 'priority':priority, 'start_date':start_date, 'end_date':end_date, 'schedule':schedule, 
+               'operators':operators, 'dial_mode':dial_mode, 'voice_message_id':voice_message_id, 'hold_message_id':hold_message_id, 'max_redial_count_if_busy':max_redial_count_if_busy,
+               'max_redial_count_if_no_answ':max_redial_count_if_no_answ, 'max_redial_count_if_number_not_avail':max_redial_count_if_number_not_avail, 'max_wait_time':max_wait_time,
+               'additional_calls_coefficient':additional_calls_coefficient, 'wait_time_if_busy':wait_time_if_busy, 'wait_time_if_no_answ':wait_time_if_no_answ,
+                'wait_time_if_number_not_avail':wait_time_if_number_not_avail, 'after_call_processing':after_call_processing}
+        return self.request(data, 'campaign/add')
+    
     def camp_task_add(self, campaign_id=None, tasks=None):
         data = {'tasks':tasks}
         return self.request(data, 'tasks/push')
