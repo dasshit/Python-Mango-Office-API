@@ -7,7 +7,7 @@ def read(filename):
         return file.read()
 
 setup(name='Python-Mango-Office-API',
-      version='3.6.9',
+      version='3.7.1',
       description='API wrapper for Mango Office.',
       long_description=read('README.md'),
       long_description_content_type="text/markdown",
