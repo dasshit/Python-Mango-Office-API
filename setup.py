@@ -17,7 +17,7 @@ setup(name='Python-Mango-Office-API',
       packages=['mangoapi'],
       license='GPL2',
       keywords='mangooffice mango',
-      install_requires=['requests', 'hashlib', 'json', 'random', 'time', 'os', 'datetime'],
+      install_requires=['requests', 'datetime'],
       classifiers=[
           'Development Status :: 5 - Production/Stable',
           'Programming Language :: Python :: 3',
