@@ -262,7 +262,6 @@ class MangoAPI:
             if request_id!=None:
                 tier = {'request_id':request_id}
                 data.update(tier)
-            print(data)
             result = json.loads(self.request(data, '/stats/request'))
             data = {}
             if request_id!=None:
@@ -275,7 +274,36 @@ class MangoAPI:
             except KeyError:
                 return 'Error'
             finally:
-                print(data)
                 return self.request(data, '/stats/result')
         else:
             return 'Please specify params'
+        
+    def dct_user_info(self, number=None):
+        if number!=None:
+            if type(number) == type('str'):
+                data = {"number": number}
+            else:
+                return 'Wrong info type'
+            return self.request(data, '/queries/user_info_by_dct_number/')
+        else:
+            return 'Please specify number'
+        
+    def dct_user_history(self, number=None):
+        if number!=None:
+            if type(number) == type('str'):
+                data = {"number": number}
+            else:
+                return 'Wrong info type'
+            return self.request(data, '/queries/user_history_by_dct_number/')
+        else:
+            return 'Please specify number'
+    
+    def user_list(self, ext_fields=None, extension=None):
+        data = {}
+        if ext_fields != None:
+            tier = {'ext_fields':ext_fields}
+            data.update(tier)
+        if extension!=None:
+            tier = {'extension':extension}
+            data.update(tier)
+        return self.request(data, '/config/users/request')
