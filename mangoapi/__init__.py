@@ -307,3 +307,21 @@ class MangoAPI:
             tier = {'extension':extension}
             data.update(tier)
         return self.request(data, '/config/users/request')
+        
+    def group_list(self, group_id=None, operator_id=None, operator_extension=None, show_users=1):
+        data = {'show_users':show_users}
+        if group_id==None and operator_id==None and operator_extension==None:
+            return self.request(data, '/groups')
+        else:
+            if group_id!=None:
+                tier = {'group_id':group_id}
+                data.update(tier)
+            else:
+                if operator_id!=None:
+                    tier = {'operator_id':operator_id}
+                    data.update(tier)
+                else:
+                    if operator_extension!=None:
+                        tier = {'operator_extension':operator_extension}
+                        data.update(tier)
+        return self.request(data, '/groups')
