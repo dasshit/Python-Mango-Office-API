@@ -4,7 +4,7 @@
 #Example:
 
 
-from mangoofficeapi import MangoAPI
+from mangoapi import MangoAPI
 api_vpbx_key = 'your_key'
 api_vpbx_salt = 'your_salt'
 api_vpbx_url = 'https://app.mango-office.ru/vpbx/'
