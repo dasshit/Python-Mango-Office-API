@@ -497,7 +497,7 @@ class MangoAPI:
         return self.request(data, 'campaign/add')
     
     def camp_task_add(self, campaign_id=None, tasks=None):
-        data = {'tasks':tasks}
+        data = {'campaign_id':str(campaign_id), 'tasks':tasks}
         return self.request(data, 'tasks/push')
     
     def campaign_start(self, campaign_id=None):
