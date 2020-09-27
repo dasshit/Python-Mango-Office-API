@@ -1,274 +1,82 @@
 #!/usr/bin/env python
-import requests
-import hashlib
-import json
+from requests import get, post
+from hashlib import sha256
+from json import dumps
 import time
-
-
-def hashing_func(data, self):
-    return hashlib.sha256(self.key.encode('utf-8') +
-                          data.encode('utf-8') +
-                          self.salt.encode('utf-8')).hexdigest()
-
-
-def stringify(data):
-    return json.dumps(data, separators=(',', ':'))
 
 
 class MangoAPI:
 
-    def __init__(self, api_url, key, salt):
+    def __init__(self, key, salt, api_url='https://app.mango-office.ru/vpbx/'):
         self.url = api_url
         self.key = key
         self.salt = salt
 
-    def request(self, data=None, api_command=None):
-        if self.url is None:
-            self.url = 'https://app.mango-office.ru/vpbx/'
-        else:
-            self.url = self.url
-        if data is None:
-            data = {}
-        else:
-            data = data
-        if api_command is None:
-            return 'Undefined method'
-        else:
-            stringified = stringify(data)
-            params = {
-                'vpbx_api_key': self.key,
-                'sign': hashing_func(stringified, self),
-                'json': stringified
-            }
-            headers = {
-                'Content-type': 'application/x-www-form-urlencoded'
-            }
-            if api_command == 'stats/result':
-                return requests.post(
-                    (self.url + api_command),
-                    data=params,
-                    headers=headers
-                ).text
-            elif api_command == 'queries/recording/post/':
-                return requests.post(
-                    (self.url + api_command),
-                    data=params,
-                    headers=headers
-                )
-            else:
-                return json.loads(requests.post(
-                    (self.url + api_command),
-                    data=params,
-                    headers=headers
-                ).text)
+    def hashing_func(self, data):
+        return sha256(self.key.encode('utf-8') +
+                      data.encode('utf-8') +
+                      self.salt.encode('utf-8')).hexdigest()
 
-    def sms(self, command_id=None, from_ext=None, text='Test', number=None, sender=None):
-        if number is None:
-            return 'Please, specify number'
-        elif from_ext is None:
-            return 'Please, specify user extension'
+    def request(self, data: dict, api_command: str):
+        params = {
+            'vpbx_api_key': self.key,
+            'sign': self.hashing_func(dumps(data, separators=(',', ':'))),
+            'json': dumps(data, separators=(',', ':'))
+        }
+        if api_command == 'stats/result':
+            return post(
+                (self.url + api_command),
+                data=params,
+                headers={'Content-type': 'application/x-www-form-urlencoded'}
+            ).text
+        elif api_command == 'queries/recording/post/':
+            return post(
+                (self.url + api_command),
+                data=params,
+                headers={'Content-type': 'application/x-www-form-urlencoded'}
+            )
         else:
-            data = {
-                "text": text,
-                "from_extension": from_ext,
-                "to_number": number
-            }
-            if command_id:
-                tier = {
-                    "command_id": command_id
-                }
-                data.update(tier)
-            else:
-                tier = {
-                    "command_id": "base"
-                }
-                data.update(tier)
-            if sender:
-                tier = {
-                    "sms_sender": sender
-                }
-                data.update(tier)
-            return self.request(data, 'commands/sms')
+            return post(
+                (self.url + api_command),
+                data=params,
+                headers={'Content-type': 'application/x-www-form-urlencoded'}
+            ).json()
 
-    def callback(self, command_id=None, from_ext=None, from_num=None, to_num=None, line=None, sip_head=None):
-        if from_ext is None:
-            return "Please, specify user extension"
-        elif to_num is None:
-            return "Please, specify calling number"
-        else:
-            data = {}
-            if command_id:
-                tier = {
-                    "command_id": command_id
-                }
-                data.update(tier)
-            else:
-                tier = {
-                    "command_id": 'base'
-                }
-                data.update(tier)
-            if from_ext and from_num:
-                tier = {
-                    'from':
-                        {
-                            'extension': from_ext,
-                            'number': from_num
-                        },
-                    'to_number': to_num
-                }
-                data.update(tier)
-            else:
-                tier = {
-                    'from':
-                        {
-                            'extension': from_ext
-                        },
-                    'to_number': to_num
-                }
-                data.update(tier)
-        if line:
-            tier = {
-                "line_number": line
-            }
-            data.update(tier)
-        if sip_head:
-            tier = {
-                "sip_headers": sip_head
-            }
-            data.update(tier)
-        return self.request(data, 'commands/callback')
+    def sms(self, from_ext: int, text: str, number: int, command_id="base", sender=None):
+        return self.request({"command_id": command_id, "text": text,
+                             "from_extension": from_ext, "to_number": number,
+                             "sms_sender": sender}, 'commands/sms')
+
+    def callback(self, command_id='base', from_ext=None, from_num=None, to_num=None, line=None, sip_head=None):
+        return self.request({"command_id": command_id,
+                             'from': {'extension': from_ext, 'number': from_num},
+                             'to_number': to_num,
+                             "line_number": line, "sip_headers": sip_head}, 'commands/callback')
 
     def group_callback(self, command_id=None, from_ext=None, to_num=None, line=None):
-        if from_ext is None:
-            return "Please, specify user extension"
-        elif to_num is None:
-            return "Please, specify calling number"
-        else:
-            data = {}
-            if command_id:
-                tier = {
-                    "command_id": command_id
-                }
-                data.update(tier)
-            else:
-                tier = {
-                    "command_id": 'base'
-                }
-                data.update(tier)
-                tier = {
-                    'from': from_ext,
-                    "to": to_num
-                }
-                data.update(tier)
-        if line:
-            tier = {
-                "line_number": line
-            }
-            data.update(tier)
-        return self.request(data, 'commands/callback_group')
+        return self.request({"command_id": command_id,
+                             'from': from_ext, "to": to_num,
+                             "line_number": line}, 'commands/callback_group')
 
-    def hangup(self, command_id=None, call_id=None):
-        if command_id is None:
-            command_id = 'base'
-        if call_id is None:
-            return 'Please specify call_id'
-        else:
-            data = {
-                'command_id': command_id,
-                'call_id': call_id
-            }
-            return self.request(data, 'commands/call/hangup')
+    def hangup(self, command_id='base', call_id=None):
+        return self.request({'command_id': command_id, 'call_id': call_id}, 'commands/call/hangup')
 
-    def start_record(self, command_id=None, call_id=None, call_party_number=None):
-        if command_id is None:
-            command_id = 'base'
-        if call_id is None:
-            return 'Please specify call_id'
-        else:
-            data = {
-                'command_id': command_id,
-                'call_id': call_id
-            }
-            if call_party_number:
-                tier = {
-                    'call_party_number': call_party_number
-                }
-                data.update(tier)
-            else:
-                return 'Please specify call_party_number'
-            return self.request(data, 'commands/recording/start')
+    def start_record(self, command_id='base', call_id=None, call_party_number=None):
+        return self.request({'command_id': command_id,
+                             'call_id': call_id, 'call_party_number': call_party_number}, 'commands/recording/start')
 
-    def start_play(self, command_id=None, call_id=None, after_play_time=None, internal_id=None):
-        if command_id is None:
-            command_id = 'base'
-        if call_id is None:
-            return 'Please specify call_id'
-        else:
-            data = {
-                'command_id': command_id,
-                'call_id': call_id
-            }
-            if after_play_time:
-                tier = {
-                    'after_play_time': after_play_time
-                }
-                data.update(tier)
-            if internal_id:
-                tier = {
-                    'internal_id': internal_id
-                }
-                data.update(tier)
-            return self.request(data, 'commands/play/start')
+    def start_play(self, command_id='base', call_id=None, after_play_time=None, internal_id=None):
+        return self.request({'command_id': command_id, 'call_id': call_id,
+                             'after_play_time': after_play_time, 'internal_id': internal_id}, 'commands/play/start')
 
-    def route(self, command_id=None, call_id=None, to_number=None, sip_headers=None):
-        if command_id is None:
-            command_id = 'base'
-        if call_id is None:
-            return 'Please specify call_id'
-        if to_number is None:
-            return 'Please specify number transfer to'
-        else:
-            data = {
-                'command_id': command_id,
-                'call_id': call_id
-            }
-            if to_number is None:
-                return 'Please specify number to route'
-            else:
-                tier = {
-                    'to_number': to_number
-                }
-                data.update(tier)
-                if sip_headers:
-                    tier = {
-                        'sip_headers': sip_headers
-                    }
-                    data.update(tier)
-                return self.request(data, 'commands/route')
+    def route(self, command_id='base', call_id=None, to_number=None, sip_headers=None):
+        return self.request({'command_id': command_id, 'call_id': call_id, 'to_number': to_number,
+                             'sip_headers': sip_headers}, 'commands/route')
 
     def transfer(self, command_id=None, call_id=None, to_number=None, initiator=None, method=None):
-        if command_id is None:
-            command_id = 'base'
-        if call_id is None:
-            return 'Please specify call_id'
-        if method is None:
-            return 'Please specify transfer method'
-        if to_number is None:
-            return 'Please specify number transfer to'
-        if initiator is None:
-            return 'Please specify initiator'
-        else:
-            data = {
-                'command_id': command_id,
-                'call_id': call_id,
-                'method': method,
-                'to_number': to_number,
-                'initiator': initiator
-            }
-            if initiator:
-                tier = {'initiator': initiator}
-                data.update(tier)
-            return self.request(data, 'commands/transfer')
+        return self.request({'command_id': command_id, 'call_id': call_id,
+                             'method': method, 'to_number': to_number,
+                             'initiator': initiator}, 'commands/transfer')
 
     def get_stats_from(self, request_id=None, from_ext=None, from_num=None, date_from=None, date_to=None, fields=None):
         if date_from and date_to and (from_ext or from_num):
@@ -302,7 +110,7 @@ class MangoAPI:
                     'request_id': request_id
                 }
                 data.update(tier)
-            result = json.loads(self.request(data, 'stats/request'))
+            result = self.request(data, 'stats/request').json()
             data = {}
             if request_id:
                 tier = {
@@ -362,9 +170,9 @@ class MangoAPI:
                 }
                 data.update(tier)
             try:
-                if result['key']:
+                if result.get('key'):
                     tier = {
-                        'key': result['key']
+                        'key': result.get('key')
                     }
                     data.update(tier)
             except KeyError:
@@ -407,7 +215,7 @@ class MangoAPI:
                     'request_id': request_id
                 }
                 data.update(tier)
-            result = json.loads(self.request(data, 'stats/request'))
+            result = self.request(data, 'stats/request').json()
             data = {}
             if request_id:
                 tier = {
@@ -428,48 +236,17 @@ class MangoAPI:
             return 'Please specify params'
 
     def dct_user_info(self, number=None):
-        if number:
-            if isinstance(number, str):
-                return self.request({
-                    "number": number
-                }, 'queries/user_info_by_dct_number/')
-            else:
-                return 'Wrong info type'
-        else:
-            return 'Please specify number'
+        return self.request({"number": number}, 'queries/user_info_by_dct_number/')
 
     def dct_user_history(self, number=None):
-        if number:
-            if isinstance(number, str):
-                return self.request({
-                    "number": number
-                }, 'queries/user_history_by_dct_number/')
-            else:
-                return 'Wrong info type'
-        else:
-            return 'Please specify number'
+        return self.request({"number": number}, 'queries/user_history_by_dct_number/')
 
-    def user_list(self, ext_fields=None, extension=None):
-        data = {}
-        if ext_fields:
-            tier = {
-                'ext_fields': ext_fields
-            }
-            data.update(tier)
-        if extension:
-            tier = {
-                'extension': extension
-            }
-            data.update(tier)
-        return self.request(data, 'config/users/request')
+    def user_list(self, extension=None, ext_fields=None):
+        return self.request({'extension': extension, 'ext_fields': ext_fields}, 'config/users/request')
 
-    def user_add(self, name=None, email=None, mobile=None,
-                 department=None, position=None,
-                 login=None, password=None,
-                 use_status=None, use_cc_numbers=None,
-                 access_role_id=None, extension=None,
-                 line_id=None, trunk_number_id=None,
-                 dial_alg=None, numbers=None):
+    def user_add(self, name=None, email=None, mobile=None, department=None, position=None, login=None, password=None,
+                 use_status=None, use_cc_numbers=None, access_role_id=None, extension=None, line_id=None,
+                 trunk_number_id=None, dial_alg=None, numbers=None):
         return self.request({
             'name': name,
             'email': email,
@@ -489,11 +266,8 @@ class MangoAPI:
         },
             'member/create')
 
-    def user_upd(self, user_id=None, name=None,
-                 email=None, mobile=None, department=None,
-                 position=None, login=None,
-                 password=None, use_status=None, use_cc_numbers=None,
-                 access_role_id=None, extension=None, line_id=None,
+    def user_upd(self, user_id=None, name=None, email=None, mobile=None, department=None, position=None, login=None,
+                 password=None, use_status=None, use_cc_numbers=None, access_role_id=None, extension=None, line_id=None,
                  trunk_number_id=None, dial_alg=None, numbers=None):
         return self.request({
             'user_id': user_id,
@@ -519,30 +293,12 @@ class MangoAPI:
         return self.request({'user_id': user_id}, 'member/delete')
 
     def group_list(self, group_id=None, operator_id=None, operator_extension=None, show_users=1):
-        data = {
-            'show_users': show_users
-        }
-        if group_id is None and operator_id is None and operator_extension is None:
-            return self.request(data, 'groups')
-        else:
-            if group_id:
-                tier = {
-                    'group_id': group_id
-                }
-                data.update(tier)
-            else:
-                if operator_id:
-                    tier = {
-                        'operator_id': operator_id
-                    }
-                    data.update(tier)
-                else:
-                    if operator_extension:
-                        tier = {
-                            'operator_extension': operator_extension
-                        }
-                        data.update(tier)
-        return self.request(data, 'groups')
+        return self.request({
+            'show_users': show_users,
+            'group_id': group_id,
+            'operator_id': operator_id,
+            'operator_extension': operator_extension
+        }, 'groups')
 
     def group_add(self, name=None, description=None, extension=None, dial_alg_group=None, dial_alg_users=None,
                   auto_redirect=None, auto_dial=None, line_id=None, use_dynamic_ivr=None, use_dynamic_seq_num=None,
@@ -596,8 +352,8 @@ class MangoAPI:
     def audio(self):
         return self.request({}, 'audiofiles')
 
-    def schemas(self, ext_fields=0):
-        if ext_fields != 0:
+    def schemas(self, ext_fields: bool):
+        if ext_fields:
             return self.request({
                 'ext_fields': [
                     'trunks_numbers'
@@ -607,23 +363,11 @@ class MangoAPI:
             return self.request({}, 'schemas/')
 
     def set_schema(self, line=None, trunk=None, schema=None):
-        if schema and (line or schema):
-            data = {
-                'schema_id': schema
-            }
-            if line:
-                tier = {
-                    'line_id': line
-                }
-                data.update(tier)
-            elif trunk:
-                tier = {
-                    'trunk_number_id': trunk
-                }
-                data.update(tier)
-        else:
-            return 'Specify params'
-        return self.request(data, 'schema/set/')
+        return self.request({
+            'schema_id': schema,
+            'line_id': line,
+            'trunk_number_id': trunk
+        }, 'schema/set/')
 
     def roles(self):
         return self.request({}, 'roles')
@@ -632,48 +376,13 @@ class MangoAPI:
         return self.request({}, 'sips')
 
     def sip_add(self, user_id=None, password=None, login=None, domain=None, description=None):
-        if user_id and password:
-            data = {
-                'user_id': user_id,
-                'password': password
-            }
-            if login and domain:
-                tier = {
-                    'login': login,
-                    'domain': domain
-                }
-                data.update(tier)
-            if description:
-                tier = {
-                    'description': description
-                }
-                data.update(tier)
-            return self.request(data, 'sip/create')
-        else:
-            return 'Specify params'
+        return self.request({'user_id': user_id, 'login': login, 'password': password,
+                             'domain': domain, 'description': description}, 'sip/create')
 
     def sip_edit(self, sip_id=None, user_id=None, password=None, login=None, domain=None, description=None):
-        if sip_id:
-            if user_id and password:
-                data = {
-                    'sip_id': sip_id,
-                    'user_id': user_id,
-                    'password': password
-                }
-                if login and domain:
-                    tier = {
-                        'login': login,
-                        'domain': domain
-                    }
-                    data.update(tier)
-                if description:
-                    tier = {
-                        'description': description
-                    }
-                    data.update(tier)
-                return self.request(data, 'sip/update')
-        else:
-            return 'Specify params'
+        return self.request({'sip_id': sip_id, 'user_id': user_id,
+                             'login': login, 'domain': domain, 'password': password,
+                             'description': description}, 'sip/update')
 
     def domains_list(self):
         return self.request({}, 'domains')
@@ -688,38 +397,17 @@ class MangoAPI:
         return self.request({}, 'bwlists/numbers/')
 
     def bwlist_add(self, number=None, list_type='black', num_type='tel', comment='API'):
-        if number:
-            return self.request({
-                'number': number,
-                'list_type': list_type,
-                'number_type': num_type,
-                'comment': comment
-            }, 'bwlists/number/add/')
-        else:
-            return 'Specify number'
+        return self.request({'number': number, 'number_type': num_type,
+                             'list_type': list_type, 'comment': comment}, 'bwlists/number/add/')
 
     def bwlist_del(self, num_id=None):
-        if num_id:
-            return self.request({
-                'number_id': num_id
-            }, 'bwlists/number/delete/')
-        else:
-            return 'Specify number'
+        return self.request({'number_id': num_id}, 'bwlists/number/delete/')
 
     def campaign_info(self, campaign_id=None):
-        if campaign_id:
-            return self.request({
-                'campaign_id': campaign_id
-            },
-                'campaign')
-        else:
-            return 'Specify campaign id'
+        return self.request({'campaign_id': campaign_id}, 'campaign')
 
     def camp_task_info(self, task_id=None):
-        return self.request({
-            'task_id': task_id
-        },
-            'task')
+        return self.request({'task_id': task_id}, 'task')
 
     def campaign_add(self, name=None, line_id=None, created_by=None,
                      priority=None, start_date=None, end_date=None,
@@ -752,73 +440,27 @@ class MangoAPI:
             'after_call_processing': after_call_processing},
             'campaign/add')
 
-    def camp_task_add(self, campaign_id=None, tasks=None):
-        return self.request({
-            'campaign_id': str(campaign_id),
-            'tasks': tasks
-        },
-            'tasks/push')
+    def camp_task_add(self, campaign_id: int, tasks: dict):
+        return self.request({'campaign_id': str(campaign_id), 'tasks': tasks}, 'tasks/push')
 
-    def campaign_start(self, campaign_id=None):
-        if campaign_id:
-            return self.request({
-                'campaign_id': campaign_id
-            },
-                'campaign/start')
-        else:
-            return 'Specify campaign id'
+    def campaign_start(self, campaign_id: int):
+        return self.request({'campaign_id': campaign_id}, 'campaign/start')
 
-    def campaign_stop(self, campaign_id=None):
-        if campaign_id:
-            return self.request({
-                'campaign_id': campaign_id
-            },
-                'campaign/stop')
-        else:
-            return 'Specify campaign id'
+    def campaign_stop(self, campaign_id: int):
+        return self.request({'campaign_id': campaign_id}, 'campaign/stop')
 
-    def campaign_del(self, campaign_id=None):
-        if campaign_id:
-            return self.request({
-                'campaign_id': campaign_id
-            },
-                'campaign/delete')
-        else:
-            return 'Specify campaign id'
+    def campaign_del(self, campaign_id: int):
+        return self.request({'campaign_id': campaign_id}, 'campaign/delete')
 
     def record_meth_get(self, record_id):
-        timestamp = str(int(time.time()) + 10800)
-        url = self.url + 'queries/recording/link/' + record_id + '/download/' + self.key + '/' + str(
-            timestamp) + '/' + hashlib.sha256(self.key.encode('utf-8') +
-                                              timestamp.encode('utf-8') +
-                                              record_id.encode('utf-8') +
-                                              self.salt.encode('utf-8')).hexdigest()
-        result = requests.get(url)
-        return result.url
+        times = str(int(time.time()) + 10800)
+        sha = sha256(self.key.encode('utf-8') + times.encode('utf-8')
+                     + record_id.encode('utf-8') + self.salt.encode('utf-8')).hexdigest()
+        return get(f"{self.url}queries/recording/link/{record_id}/download/{self.key}/{times}/{sha}").url
 
-    def record_meth_post(self, record_id):
-        return self.request({
-            'recording_id': record_id,
-            'action': 'download'
-        },
-            'queries/recording/post/')
+    def record_meth_post(self, record_id, action):
+        return self.request({'recording_id': record_id, 'action': action}, 'queries/recording/post/')
 
-    def speech2text(self, record_id=None, with_terms=None, with_names=None):
-        if record_id:
-            result = '[\"' + record_id + '\"]'
-            data = {
-                "recording_id": result
-            }
-            if with_terms:
-                tier = {
-                    'with_terms': True
-                }
-                data.update(tier)
-            if with_names:
-                tier = {
-                    'with_names': True
-                }
-                data.update(tier)
-            return self.request(data, 'queries/recording_categories/')
-        else:
-            return 'Specify params'
+    def speech2text(self, record_id: str, with_terms: bool, with_names: bool):
+        return self.request({'recording_id': f'[\"{record_id}\"]',
+                             'with_terms': with_terms, 'with_names': with_names}, 'queries/recording_categories/')
