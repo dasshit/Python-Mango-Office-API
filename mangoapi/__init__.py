@@ -490,8 +490,8 @@ class MangoAPI:
                                                            str(int(time.time()) + 10800).encode('utf-8') +
                                                            record_id.encode('utf-8') +
                                                            self.salt.encode('utf-8')).hexdigest()
-        result = get(url).url
-        if self.logger is not None and result.status_code != 401:
+        result = get(url)
+        if self.logger is not None and result.status_code not in [401, 404]:
             self.logger.info(f'url - {result.url}, headers - {result.request.headers}, data - {result.request.body}')
             self.logger.info(f'status - {result.status_code}, headers - {result.headers}, response - {result.text}')
         elif self.logger is not None:
