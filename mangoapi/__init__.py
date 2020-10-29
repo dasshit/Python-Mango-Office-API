@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from requests import get, post
 from hashlib import sha256
-from json import dumps
+from json import dumps, loads
 import time
 
 
@@ -43,11 +43,18 @@ class MangoAPI:
 
             if self.logger is not None and result.status_code not in [401, 404]:
                 self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
-                self.logger.info({'status': result.status_code, 'headers': result.headers, 'response': result.text})
+                try:
+                    self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': loads(result.text)})
+                except:
+                    self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': result.text})
             elif self.logger is not None:
                 self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
-                self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': result.text})
-                self.logger.error(f'For details you can contact techsupport, please write this log in your request, http-request-id: {result.headers.get("X-Uuid")}')
+                try:
+                    self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': loads(result.text)})
+                except:
+                    self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': result.text})
+                self.logger.error({"details": "For details you can contact techsupport, please write this log in your request, http-request-id",
+                                   "X-Uuid": result.headers.get('X-Uuid')})
             if api_command in ['stats/result', 'stats/request', 'queries/recording/post/']:
                 return result
             else:
@@ -494,11 +501,15 @@ class MangoAPI:
         result = get(url)
         if self.logger is not None and result.status_code not in [401, 404]:
             self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
-            self.logger.info({'status': result.status_code, 'headers': result.headers, 'response': result.text})
+            try:
+                self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': loads(result.text)})
+            except:
+                self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': result.text})
         elif self.logger is not None:
             self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
             self.logger.error({'status': result.status_code, 'headers': result.headers})
-            self.logger.error(f'For details you can contact techsupport, please write this log in your request, http-request-id: {result.headers.get("X-Uuid")}')
+            self.logger.error({"details": "For details you can contact techsupport, please write this log in your request, http-request-id",
+                               "X-Uuid": result.headers.get('X-Uuid')})
         return result.url
 
     def record_meth_post(self, record_id):
