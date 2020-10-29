@@ -493,7 +493,7 @@ class MangoAPI:
         result = get(url)
         if self.logger is not None and result.status_code not in [401, 404]:
             self.logger.info(f'url - {result.url}, headers - {result.request.headers}, data - {result.request.body}')
-            self.logger.info(f'status - {result.status_code}, headers - {result.headers}, response - {result.text}')
+            self.logger.info(f'status - {result.status_code}, headers - {result.headers}')
         elif self.logger is not None:
             self.logger.info(f'url - {result.url}, headers - {result.request.headers}, data - {result.request.body}')
             self.logger.error(f'status - {result.status_code}, headers - {result.headers}, response - {result.text}')
