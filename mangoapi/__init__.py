@@ -490,7 +490,15 @@ class MangoAPI:
                                                            str(int(time.time()) + 10800).encode('utf-8') +
                                                            record_id.encode('utf-8') +
                                                            self.salt.encode('utf-8')).hexdigest()
-        return get(url).url
+        result = get(url).url
+        if self.logger is not None and result.status_code != 401:
+            self.logger.info(f'url - {result.url}, headers - {result.request.headers}, data - {result.request.body}')
+            self.logger.info(f'status - {result.status_code}, headers - {result.headers}, response - {result.text}')
+        elif self.logger is not None:
+            self.logger.info(f'url - {result.url}, headers - {result.request.headers}, data - {result.request.body}')
+            self.logger.error(f'status - {result.status_code}, headers - {result.headers}, response - {result.text}')
+            self.logger.error(f'For details you can contact techsupport, please write this log in your request, http-request-id: {result.headers.get("X-Uuid")}')
+        return result.url
 
     def record_meth_post(self, record_id):
         return self.request({'recording_id': record_id, 'action': 'download'}, 'queries/recording/post/').url
