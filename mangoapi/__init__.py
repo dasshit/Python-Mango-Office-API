@@ -11,6 +11,8 @@ def stringify(data):
 
 class MangoAPI:
 
+    __slots__ = ['url', 'key', 'salt', 'logger', 'headers']
+    
     def __init__(self, api_url, key, salt, logger=None, headers={'Content-type': 'application/x-www-form-urlencoded'}):
         self.url = api_url
         self.key = key
