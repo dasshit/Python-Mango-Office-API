@@ -11,10 +11,12 @@ def stringify(data):
 
 class MangoAPI:
 
-    def __init__(self, api_url, key, salt):
+    def __init__(self, api_url, key, salt, logger=None, headers={'Content-type': 'application/x-www-form-urlencoded'}):
         self.url = api_url
         self.key = key
         self.salt = salt
+        self.logger = logger
+        self.headers = headers
 
     def hash(self, data):
         return sha256(self.key.encode('utf-8') +
@@ -37,19 +39,19 @@ class MangoAPI:
             params = {'vpbx_api_key': self.key,
                       'sign': self.hash(stringified),
                       'json': stringified}
-            headers = {'Content-type': 'application/x-www-form-urlencoded'}
-            if api_command == 'stats/result' or api_command == 'stats/request':
-                return post((self.url + api_command),
-                            data=params,
-                            headers=headers)
-            elif api_command == 'queries/recording/post/':
-                return post((self.url + api_command),
-                            data=params,
-                            headers=headers)
+            result = post((self.url + api_command),
+                           data=params,
+                           headers=self.headers)
+            if self.logger is not None and result.status_code != 401:
+                self.logger.info(f'url - {result.url}, headers - {result.request.headers}, data - {result.request.body}')
+                self.logger.info(f'status - {result.status_code}, headers - {result.headers}, response - {result.text}')
+            elif self.logger is not None:
+                self.logger.info(f'url - {result.url}, headers - {result.request.headers}, data - {result.request.body}')
+                self.logger.error(f'status - {result.status_code}, headers - {result.headers}, response - {result.text}')
+            if api_command in ['stats/result', 'stats/request', 'queries/recording/post/']:
+                return result
             else:
-                return post((self.url + api_command),
-                            data=params,
-                            headers=headers).json()
+                return result.json()
 
     def sms(self, command_id="base", from_ext=None, text='Test', number=None, sender=None):
         if number is None:
@@ -172,8 +174,11 @@ class MangoAPI:
                 data.update({'fields': fields})
             if request_id is not None:
                 data.update({'request_id': request_id})
-            result = self.request(data, 'stats/request').json()
+            result = self.request(data, 'stats/request')
+            if result.status_code == 401:
+                return result.json()
             data = {}
+            result = result.json()
             if request_id is not None:
                 data.update({'request_id': request_id})
             try:
@@ -198,7 +203,10 @@ class MangoAPI:
             if request_id is not None:
                 data.update({'request_id': request_id})
             result = self.request(data, 'stats/request')
+            if result.status_code == 401:
+                return result.json()
             data = {}
+            result = result.json()
             if request_id is not None:
                 data.update({'request_id': request_id})
             try:
@@ -223,8 +231,11 @@ class MangoAPI:
                 data.update({'fields': fields})
             if request_id is not None:
                 data.update({'request_id': request_id})
-            result = self.request(data, 'stats/request').json()
+            result = self.request(data, 'stats/request')
+            if result.status_code == 401:
+                return result.json()
             data = {}
+            result = result.json()
             if request_id is not None:
                 data.update({'request_id': request_id})
             try:
