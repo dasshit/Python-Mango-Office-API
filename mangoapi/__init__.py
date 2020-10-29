@@ -40,12 +40,13 @@ class MangoAPI:
             result = post((self.url + api_command),
                            data=params,
                            headers=self.headers)
+
             if self.logger is not None and result.status_code not in [401, 404]:
-                self.logger.info(f'url - {result.url}, headers - {result.request.headers}, data - {result.request.body}')
-                self.logger.info(f'status - {result.status_code}, headers - {result.headers}, response - {result.text}')
+                self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
+                self.logger.info({'status': result.status_code, 'headers': result.headers, 'response': result.text})
             elif self.logger is not None:
-                self.logger.info(f'url - {result.url}, headers - {result.request.headers}, data - {result.request.body}')
-                self.logger.error(f'status - {result.status_code}, headers - {result.headers}, response - {result.text}')
+                self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
+                self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': result.text})
                 self.logger.error(f'For details you can contact techsupport, please write this log in your request, http-request-id: {result.headers.get("X-Uuid")}')
             if api_command in ['stats/result', 'stats/request', 'queries/recording/post/']:
                 return result
@@ -492,11 +493,11 @@ class MangoAPI:
                                                            self.salt.encode('utf-8')).hexdigest()
         result = get(url)
         if self.logger is not None and result.status_code not in [401, 404]:
-            self.logger.info(f'url - {result.url}, headers - {result.request.headers}, data - {result.request.body}')
-            self.logger.info(f'status - {result.status_code}, headers - {result.headers}')
+            self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
+            self.logger.info({'status': result.status_code, 'headers': result.headers, 'response': result.text})
         elif self.logger is not None:
-            self.logger.info(f'url - {result.url}, headers - {result.request.headers}, data - {result.request.body}')
-            self.logger.error(f'status - {result.status_code}, headers - {result.headers}, response - {result.text}')
+            self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
+            self.logger.error({'status': result.status_code, 'headers': result.headers})
             self.logger.error(f'For details you can contact techsupport, please write this log in your request, http-request-id: {result.headers.get("X-Uuid")}')
         return result.url
 
