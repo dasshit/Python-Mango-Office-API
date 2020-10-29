@@ -30,10 +30,6 @@ class MangoAPI:
             self.url = 'https://app.mango-office.ru/vpbx/'
         else:
             self.url = self.url
-        if data is None:
-            data = {}
-        else:
-            data = data
         if api_command is None:
             raise ValueError('Undefined method')
         else:
