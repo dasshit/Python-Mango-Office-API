@@ -46,6 +46,7 @@ class MangoAPI:
             elif self.logger is not None:
                 self.logger.info(f'url - {result.url}, headers - {result.request.headers}, data - {result.request.body}')
                 self.logger.error(f'status - {result.status_code}, headers - {result.headers}, response - {result.text}')
+                self.logger.error(f'For details you can contact techsupport, please write this log in your request, http-request-id: {result.headers.get("X-Uuid")}')
             if api_command in ['stats/result', 'stats/request', 'queries/recording/post/']:
                 return result
             else:
