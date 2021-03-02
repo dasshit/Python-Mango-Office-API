@@ -37,23 +37,20 @@ class MangoAPI:
             params = {'vpbx_api_key': self.key,
                       'sign': self.hash(stringified),
                       'json': stringified}
+            if self.logger is not None:
+                self.logger.info({"url": self.url + api_command, "headers": self.headers, "data": params})
             result = post((self.url + api_command),
                            data=params,
                            headers=self.headers)
+            if self.logger is not None:
+                self.logger.info({"data": result.request.body})
 
             if self.logger is not None and result.status_code not in [401, 404]:
-                self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
-                try:
-                    self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': loads(result.text)})
-                except:
-                    self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': result.text})
+                self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': result.text})
             elif self.logger is not None:
-                self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
-                try:
-                    self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': loads(result.text)})
-                except:
-                    self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': result.text})
-                self.logger.error({"details": "For details you can contact techsupport, please write this log in your request, http-request-id",
+                self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': result.text})
+                self.logger.error({"details": "For details you can contact techsupport, "
+                                              "please write this log in your request, http-request-id",
                                    "X-Uuid": result.headers.get('X-Uuid')})
             if api_command in ['stats/result', 'stats/request', 'queries/recording/post/']:
                 return result
@@ -172,7 +169,7 @@ class MangoAPI:
     def get_stats_from(self, request_id=None, from_ext=None, from_num=None, date_from=None, date_to=None, fields=None):
         if date_from is not None and date_to is not None and (from_ext is not None or from_num is not None):
             data = {'date_from': str(date_from),
-                    'date_to': str(date_from)}
+                    'date_to': str(date_to)}
             if from_ext is not None:
                 data.update({'from': {'extenstion': from_ext}})
             else:
@@ -200,7 +197,7 @@ class MangoAPI:
     def get_stats_to(self, request_id=None, to_ext=None, to_num=None, date_from=None, date_to=None, fields=None):
         if date_from is not None and date_to is not None and (to_ext is not None or to_num is not None):
             data = {'date_from': str(date_from),
-                    'date_to': str(date_from)}
+                    'date_to': str(date_to)}
             if to_ext is not None:
                 data.update({'to': {'extenstion': to_ext}})
             else:
