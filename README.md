@@ -8,10 +8,6 @@ Wrapper для API ВАТС Mango Office https://www.mango-office.ru/upload/api/
 ```
 Протестировано на Python 3.6.8, Python 3.8. 
 ```
-* Установка через pip (рекомендуется):
-```
-$ pip install Python-Mango-Office-API
-```
 * Установка из источника (нужен git):
 ```
 $ git clone https://github.com/dasshit/Python-Mango-Office-API.git
