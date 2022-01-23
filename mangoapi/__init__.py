@@ -5,6 +5,7 @@ from json import dumps, loads
 from requests import get, post
 from typing import List, Dict
 
+
 def stringify(data):
     return dumps(data, separators=(',', ':'))
 
@@ -19,6 +20,10 @@ class MangoAPI:
         self.salt = salt
         self.logger = logger
         self.headers = headers
+        if self.url:  # strip vpbx
+            pos = self.url.find('vpbx')
+            if pos > 0:
+                self.url = self.url[0: pos]
 
     def hash(self, data):
         return sha256(self.key.encode('utf-8') +
@@ -39,9 +44,7 @@ class MangoAPI:
                       'json': stringified}
             if self.logger is not None:
                 self.logger.info({"url": self.url + api_command, "headers": self.headers, "data": params})
-            result = post((self.url + api_command),
-                           data=params,
-                           headers=self.headers)
+            result = post((self.url + api_command), data=params, headers=self.headers)
             if self.logger is not None:
                 self.logger.info({"data": result.request.body})
 
@@ -52,6 +55,8 @@ class MangoAPI:
                 self.logger.error({"details": "For details you can contact techsupport, "
                                               "please write this log in your request, http-request-id",
                                    "X-Uuid": result.headers.get('X-Uuid')})
+            if not result.ok:
+                raise result.raise_for_status()
             if api_command in ['stats/result', 'stats/request', 'queries/recording/post/']:
                 return result
             else:
@@ -499,13 +504,15 @@ class MangoAPI:
         if self.logger is not None and result.status_code not in [401, 404]:
             self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
             try:
-                self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': loads(result.text)})
+                self.logger.error(
+                    {'status': result.status_code, 'headers': result.headers, 'response': loads(result.text)})
             except:
                 self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': result.text})
         elif self.logger is not None:
             self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
             self.logger.error({'status': result.status_code, 'headers': result.headers})
-            self.logger.error({"details": "For details you can contact techsupport, please write this log in your request, http-request-id",
+            self.logger.error({"details": "For details you can contact techsupport, "
+                                          "please write this log in your request, http-request-id",
                                "X-Uuid": result.headers.get('X-Uuid')})
         return result.url
 
@@ -665,27 +672,33 @@ class MangoAPI:
     # /events/ab        - Уведомление об операциях с адресной книгой
     # /ab/custom_fields - Получение набора пользовательских полей
 
-    def cc_deal_list(self, product_id=None, from_date=None, until_date=None,
+    def cc_deal_list(self, product_id, from_date=None, until_date=None,
                      members_ids=None, contact_id=None,
                      status=None
                      ):
-        data = {}
-        if True:
-            if product_id is not None:
-                data.update({'product_id': product_id})
+        if product_id:
+            data = {'product_id': product_id}
+            if from_date is not None:
+                data.update({'from_date': from_date})
+            if from_date is not None:
+                data.update({'from_date': from_date})
+            if until_date is not None:
+                data.update({'until_date': until_date})
+            if members_ids is not None:
+                data.update({'members_ids': members_ids})
             if contact_id is not None:
                 data.update({'contact_id': contact_id})
+            if status is not None:
+                data.update({'status': status})
             return self.request(data, 'cc/deal/list')
         else:
             raise ValueError('Please specify params')
 
-    def cc_deal_create(self, product_id=None, contact_id=None, name=None, description=None, amount=None, member_id=None,
+    def cc_deal_create(self, product_id, contact_id=None, name=None, description=None, amount=None, member_id=None,
                        funnel_id=None, step_id=None, create_date=None, status=None, custom_fields: Dict = None,
                        status_change_reason=None, reason_comment=None):
-        if name is not None:
-            data = {"name": name, "product_id": 1}
-            if product_id is not None:
-                data.update({'product_id': product_id})
+        if name is not None and product_id is not None:
+            data = {"name": name, "product_id": product_id}
             if contact_id is not None:
                 data.update({'contact_id': contact_id})
             if description is not None:
@@ -712,13 +725,11 @@ class MangoAPI:
         else:
             raise ValueError('Please specify params')
 
-    def cc_deal_update(self, deal_id, product_id=None, contact_id=None, name=None, description=None, amount=None, member_id=None,
-                       funnel_id=None, step_id=None, create_date=None, status=None, custom_fields: Dict = None,
-                       status_change_reason=None, reason_comment=None):
-        if deal_id is not None:
-            data = {"deal_id": deal_id, "product_id": 1}
-            if product_id is not None:
-                data.update({'product_id': product_id})
+    def cc_deal_update(self, deal_id, product_id, contact_id=None, name=None, description=None, amount=None,
+                       member_id=None, funnel_id=None, step_id=None, create_date=None, status=None,
+                       custom_fields: Dict = None, status_change_reason=None, reason_comment=None):
+        if deal_id is not None and product_id is not None and name is not None:
+            data = {"deal_id": deal_id, "product_id": product_id, "name": name}
             if contact_id is not None:
                 data.update({'contact_id': contact_id})
             if name is not None:
@@ -744,5 +755,12 @@ class MangoAPI:
             if reason_comment is not None:
                 data.update({'reason_comment': reason_comment})
             return self.request(data, 'cc/deal/update/')
+        else:
+            raise ValueError('Please specify params')
+
+    def cc_deal_funnels_list(self, product_id):
+        if product_id is not None:
+            data = {"product_id": product_id, }
+            return self.request(data, 'cc/deal/funnels.list/')
         else:
             raise ValueError('Please specify params')
