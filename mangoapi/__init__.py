@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-from requests import get, post
+import time
 from hashlib import sha256
 from json import dumps, loads
-import time
+from requests import get, post
+from typing import List, Dict
 
 
 def stringify(data):
@@ -19,6 +20,10 @@ class MangoAPI:
         self.salt = salt
         self.logger = logger
         self.headers = headers
+        if self.url:  # strip vpbx
+            pos = self.url.find('vpbx')
+            if pos > 0:
+                self.url = self.url[0: pos]
 
     def hash(self, data):
         return sha256(self.key.encode('utf-8') +
@@ -27,7 +32,7 @@ class MangoAPI:
 
     def request(self, data=None, api_command=None):
         if self.url is None:
-            self.url = 'https://app.mango-office.ru/vpbx/'
+            self.url = 'https://app.mango-office.ru/'
         else:
             self.url = self.url
         if api_command is None:
@@ -39,9 +44,7 @@ class MangoAPI:
                       'json': stringified}
             if self.logger is not None:
                 self.logger.info({"url": self.url + api_command, "headers": self.headers, "data": params})
-            result = post((self.url + api_command),
-                           data=params,
-                           headers=self.headers)
+            result = post((self.url + api_command), data=params, headers=self.headers)
             if self.logger is not None:
                 self.logger.info({"data": result.request.body})
 
@@ -52,6 +55,8 @@ class MangoAPI:
                 self.logger.error({"details": "For details you can contact techsupport, "
                                               "please write this log in your request, http-request-id",
                                    "X-Uuid": result.headers.get('X-Uuid')})
+            if not result.ok:
+                raise result.raise_for_status()
             if api_command in ['stats/result', 'stats/request', 'queries/recording/post/']:
                 return result
             else:
@@ -71,7 +76,7 @@ class MangoAPI:
             }
             if sender is not None:
                 data.update({"sms_sender": sender})
-            return self.request(data, 'commands/sms')
+            return self.request(data, 'vpbx/commands/sms')
 
     def callback(self, command_id="base", from_ext=None, from_num=None, to_num=None, line=None, sip_head=None):
         if from_ext is None:
@@ -88,7 +93,7 @@ class MangoAPI:
                 data.update({"line_number": line})
             if sip_head is not None:
                 data.update({"sip_headers": sip_head})
-            return self.request(data, 'commands/callback')
+            return self.request(data, 'vpbx/commands/callback')
 
     def group_callback(self, command_id="base", from_ext=None, to_num=None, line=None):
         if from_ext is None:
@@ -103,7 +108,7 @@ class MangoAPI:
             }
             if line is not None:
                 data.update({"line_number": line})
-            return self.request(data, 'commands/callback_group')
+            return self.request(data, 'vpbx/commands/callback_group')
 
     def hangup(self, command_id="base", call_id=None):
         if call_id is None:
@@ -131,7 +136,7 @@ class MangoAPI:
                 data.update({'after_play_time': after_play_time})
             if internal_id is not None:
                 data.update({'internal_id': internal_id})
-            return self.request(data, 'commands/play/start')
+            return self.request(data, 'vpbx/commands/play/start')
 
     def route(self, command_id="base", call_id=None, to_number=None, sip_headers=None):
         if call_id is None:
@@ -145,7 +150,7 @@ class MangoAPI:
                 data = {'command_id': command_id, 'call_id': call_id, 'to_number': to_number}
                 if sip_headers is not None:
                     data.update({'sip_headers': sip_headers})
-                return self.request(data, 'commands/route')
+                return self.request(data, 'vpbx/commands/route')
 
     def transfer(self, command_id=None, call_id=None, to_number=None, initiator=None, method=None):
         if command_id is None:
@@ -164,7 +169,7 @@ class MangoAPI:
             if initiator is not None:
                 tier = {'initiator': initiator}
                 data.update(tier)
-            return self.request(data, 'commands/transfer')
+            return self.request(data, 'vpbx/commands/transfer')
 
     def get_stats_from(self, request_id=None, from_ext=None, from_num=None, date_from=None, date_to=None, fields=None):
         if date_from is not None and date_to is not None and (from_ext is not None or from_num is not None):
@@ -178,7 +183,7 @@ class MangoAPI:
                 data.update({'fields': fields})
             if request_id is not None:
                 data.update({'request_id': request_id})
-            result = self.request(data, 'stats/request')
+            result = self.request(data, 'vpbx/stats/request')
             if result.status_code == 401:
                 return result.json()
             data = {}
@@ -190,7 +195,7 @@ class MangoAPI:
                     data.update({'key': result['key']})
             except KeyError as error:
                 raise KeyError(error)
-            return self.request(data, 'stats/result')
+            return self.request(data, 'vpbx/stats/result')
         else:
             raise ValueError('Please specify params')
 
@@ -206,7 +211,7 @@ class MangoAPI:
                 data.update({'fields': fields})
             if request_id is not None:
                 data.update({'request_id': request_id})
-            result = self.request(data, 'stats/request')
+            result = self.request(data, 'vpbx/stats/request')
             if result.status_code == 401:
                 return result.json()
             data = {}
@@ -218,7 +223,7 @@ class MangoAPI:
                     data.update({'key': result['key']})
             except KeyError as error:
                 raise KeyError(error)
-            return self.request(data, 'stats/result')
+            return self.request(data, 'vpbx/stats/result')
         else:
             raise ValueError('Please specify params')
 
@@ -235,7 +240,7 @@ class MangoAPI:
                 data.update({'fields': fields})
             if request_id is not None:
                 data.update({'request_id': request_id})
-            result = self.request(data, 'stats/request')
+            result = self.request(data, 'vpbx/stats/request')
             if result.status_code == 401:
                 return result.json()
             data = {}
@@ -247,7 +252,7 @@ class MangoAPI:
                     data.update({'key': result['key']})
             except KeyError as error:
                 raise KeyError(error)
-            return self.request(data, 'stats/result').text
+            return self.request(data, 'vpbx/stats/result').text
         else:
             raise ValueError('Please specify params')
 
@@ -275,7 +280,7 @@ class MangoAPI:
             data.update({'ext_fields': ext_fields})
         if extension is not None:
             data.update({'extension': extension})
-        return self.request(data, 'config/users/request')
+        return self.request(data, 'vpbx/config/users/request')
 
     def user_add(self, name=None, email=None, mobile=None,
                  department=None, position=None, login=None,
@@ -312,7 +317,7 @@ class MangoAPI:
     def group_list(self, group_id=None, operator_id=None, operator_extension=None, show_users=1):
         data = {'show_users': show_users}
         if group_id is None and operator_id is None and operator_extension is None:
-            return self.request(data, 'groups')
+            return self.request(data, 'vpbx/groups')
         else:
             if group_id is not None:
                 data.update({'group_id': group_id})
@@ -322,7 +327,7 @@ class MangoAPI:
                 else:
                     if operator_extension is not None:
                         data.update({'operator_extension': operator_extension})
-        return self.request(data, 'groups')
+        return self.request(data, 'vpbx/groups')
 
     def group_add(self, name=None, description=None, extension=None,
                   dial_alg_group=None, dial_alg_users=None, auto_redirect=None,
@@ -368,7 +373,7 @@ class MangoAPI:
             data = {'ext_fields': ['trunks_numbers']}
         else:
             data = {}
-        return self.request(data, 'schemas/')
+        return self.request(data, 'vpbx/schemas/')
 
     def set_schema(self, line=None, trunk=None, schema=None):
         if schema is not None and (line is not None or schema is not None):
@@ -379,7 +384,7 @@ class MangoAPI:
                 data.update({'trunk_number_id': trunk})
         else:
             raise ValueError('Please specify params')
-        return self.request(data, 'schema/set/')
+        return self.request(data, 'vpbx/schema/set/')
 
     def roles(self):
         return self.request({}, 'roles')
@@ -394,7 +399,7 @@ class MangoAPI:
                 data.update({'login': login, 'domain': domain})
             if description is not None:
                 data.update({'description': description})
-            return self.request(data, 'sip/create')
+            return self.request(data, 'vpbx/sip/create')
         else:
             raise ValueError('Please specify params')
 
@@ -406,7 +411,7 @@ class MangoAPI:
                     data.update({'login': login, 'domain': domain})
                 if description is not None:
                     data.update({'description': description})
-                return self.request(data, 'sip/update')
+                return self.request(data, 'vpbx/sip/update')
             else:
                 raise ValueError('Please specify params')
         else:
@@ -499,13 +504,15 @@ class MangoAPI:
         if self.logger is not None and result.status_code not in [401, 404]:
             self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
             try:
-                self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': loads(result.text)})
+                self.logger.error(
+                    {'status': result.status_code, 'headers': result.headers, 'response': loads(result.text)})
             except:
                 self.logger.error({'status': result.status_code, 'headers': result.headers, 'response': result.text})
         elif self.logger is not None:
             self.logger.info({"url": result.url, "headers": result.request.headers, "data": result.request.body})
             self.logger.error({'status': result.status_code, 'headers': result.headers})
-            self.logger.error({"details": "For details you can contact techsupport, please write this log in your request, http-request-id",
+            self.logger.error({"details": "For details you can contact techsupport, "
+                                          "please write this log in your request, http-request-id",
                                "X-Uuid": result.headers.get('X-Uuid')})
         return result.url
 
@@ -519,6 +526,241 @@ class MangoAPI:
                 data.update({'with_terms': True})
             if with_names is not None:
                 data.update({'with_names': True})
-            return self.request(data, 'queries/recording_categories/')
+            return self.request(data, 'vpbx/queries/recording_categories/')
+        else:
+            raise ValueError('Please specify params')
+
+    # AddressBook ...
+    # /ab/organization/         - Получить организацию по id
+    # /ab/organizations/init    - Получить список организаций, инициация отчета
+    # /ab/organizations/cursor  - Получить список организаций, постраничное получение
+    # /ab/organizations/create  - Добавить организацию
+    # /ab/organizations/update  - Редактировать организацию
+    # /ab/organizations/delete  - Удалить организацию POST
+    # /ab/group                 - Получить группу по id
+    # /ab/groups/init           - Получить список групп, инициация отчета
+    # /ab/groups/cursor         - Получить список групп, постраничное получение
+    # /ab/groups/create/        - Добавить группу
+    # /ab/groups/update         - Редактировать группу
+    # /ab/groups/delete         - Удалить группу
+
+    def ab_contact(self, contact_id, contact_ext_fields=None):
+        if contact_id is not None:
+            data = {"contact_id": contact_id}
+            if contact_ext_fields is not None:
+                data.update({'contact_ext_fields': contact_ext_fields})
+            return self.request(data, 'vpbx/ab/contact/')
+        else:
+            raise ValueError('Please specify params')
+
+    def ab_contact_init(self, query="", limit_rows=None, order=None, contact_ext_fields=None):
+        if query is not None:
+            data = {"query": query}
+            if limit_rows is not None:
+                data.update({'limit_rows': limit_rows})
+            if order is not None:
+                data.update({'order': order})
+            if contact_ext_fields is not None:
+                data.update({'contact_ext_fields': contact_ext_fields})
+            return self.request(data, 'vpbx/ab/contact/init/')
+        else:
+            raise ValueError('Please specify params')
+
+    def ab_contact_cursor(self, mode=None, cursor=None, contact_ext_fields=None):
+        if mode is not None and cursor is not None:
+            data = {"query": query, "cursor": cursor}
+            if contact_ext_fields is not None:
+                data.update({'contact_ext_fields': contact_ext_fields})
+            return self.request(data, 'vpbx/ab/contact/cursor/')
+        else:
+            raise ValueError('Please specify params')
+
+    def ab_contacts_create(self, type=0, name=None, office=None, site=None, org=None, importance=None, comment=None,
+                           birthday=None, sex=None, phones: List = None, emails: List = None, groups=None,
+                           nets: List = None, messengers: List = None, in_favorites: List = None,
+                           custom_values: List = None, user_id=None, on_error="skip"):
+        if type is not None and name is not None:
+            contact_data = {"type": type, 'name': name}
+            if office is not None:
+                contact_data.update({'office': office})
+            if site is not None:
+                contact_data.update({'site': site})
+            if org is not None:
+                contact_data.update({'org': org})
+            if importance is not None:
+                contact_data.update({'importance': importance})
+            if comment is not None:
+                contact_data.update({'comment': comment})
+            if birthday is not None:
+                contact_data.update({'birthday': birthday})
+            if sex is not None:
+                contact_data.update({'sex': sex})
+            if phones is not None:
+                contact_data.update({'phones': phones})
+            if emails is not None:
+                contact_data.update({'emails': emails})
+            if groups is not None:
+                contact_data.update({'groups': groups})
+            if nets is not None:
+                contact_data.update({'nets': nets})
+            if messengers is not None:
+                contact_data.update({'messengers': messengers})
+            if in_favorites is not None:
+                contact_data.update({'in_favorites': in_favorites})
+            if custom_values is not None:
+                contact_data.update({'custom_values': custom_values})
+            if user_id is not None:
+                contact_data.update({'user_id': user_id})
+
+            data = {"data": [contact_data]}
+            if on_error is not None:
+                data.update({'on_error': on_error})
+
+            return self.request(data, 'vpbx/ab/contacts/create/')
+        else:
+            raise ValueError('Please specify params')
+
+    def ab_contact_update(self, contact_id, type=None, name=None, office=None, site=None, org=None, importance=None,
+                          comment=None, birthday=None, sex=None, phones: List = None, emails: List = None, groups=None,
+                          nets: List = None, messengers: List = None, in_favorites: List = None,
+                          custom_values: List = None, user_id=None, on_error="skip"):
+        if contact_id is not None:
+            contact_data = {"contact_id": contact_id}
+            if type is not None:
+                contact_data.update({'type': type})
+            if name is not None:
+                contact_data.update({'name': name})
+            if office is not None:
+                contact_data.update({'office': office})
+            if site is not None:
+                contact_data.update({'site': site})
+            if org is not None:
+                contact_data.update({'org': org})
+            if importance is not None:
+                contact_data.update({'importance': importance})
+            if comment is not None:
+                contact_data.update({'comment': comment})
+            if birthday is not None:
+                contact_data.update({'birthday': birthday})
+            if sex is not None:
+                contact_data.update({'sex': sex})
+            if phones is not None:
+                contact_data.update({'phones': phones})
+            if emails is not None:
+                contact_data.update({'emails': emails})
+            if groups is not None:
+                contact_data.update({'groups': groups})
+            if nets is not None:
+                contact_data.update({'nets': nets})
+            if messengers is not None:
+                contact_data.update({'messengers': messengers})
+            if in_favorites is not None:
+                contact_data.update({'in_favorites': in_favorites})
+            if custom_values is not None:
+                contact_data.update({'custom_values': custom_values})
+            if user_id is not None:
+                contact_data.update({'user_id': user_id})
+
+            data = {"data": [contact_data]}
+            if on_error is not None:
+                data.update({'on_error': on_error})
+
+            return self.request(data, 'vpbx/ab/contacts/update/')
+        else:
+            raise ValueError('Please specify params')
+
+    # /events/ab        - Уведомление об операциях с адресной книгой
+    # /ab/custom_fields - Получение набора пользовательских полей
+
+    def cc_deal_list(self, product_id, from_date=None, until_date=None,
+                     members_ids=None, contact_id=None,
+                     status=None
+                     ):
+        if product_id:
+            data = {'product_id': product_id}
+            if from_date is not None:
+                data.update({'from_date': from_date})
+            if from_date is not None:
+                data.update({'from_date': from_date})
+            if until_date is not None:
+                data.update({'until_date': until_date})
+            if members_ids is not None:
+                data.update({'members_ids': members_ids})
+            if contact_id is not None:
+                data.update({'contact_id': contact_id})
+            if status is not None:
+                data.update({'status': status})
+            return self.request(data, 'cc/deal/list')
+        else:
+            raise ValueError('Please specify params')
+
+    def cc_deal_create(self, product_id, contact_id=None, name=None, description=None, amount=None, member_id=None,
+                       funnel_id=None, step_id=None, create_date=None, status=None, custom_fields: Dict = None,
+                       status_change_reason=None, reason_comment=None):
+        if name is not None and product_id is not None:
+            data = {"name": name, "product_id": product_id}
+            if contact_id is not None:
+                data.update({'contact_id': contact_id})
+            if description is not None:
+                data.update({'description': description})
+            if amount is not None:
+                data.update({'amount': amount})
+            if member_id is not None:
+                data.update({'member_id': member_id})
+            if funnel_id is not None:
+                data.update({'funnel_id': funnel_id})
+            if step_id is not None:
+                data.update({'step_id': step_id})
+            if create_date is not None:
+                data.update({'create_date': create_date})
+            if status is not None:
+                data.update({'status': status})
+            if status_change_reason is not None:
+                data.update({'status_change_reason': status_change_reason})
+            if custom_fields is not None:
+                data.update({'custom_fields': custom_fields})
+            if reason_comment is not None:
+                data.update({'reason_comment': reason_comment})
+            return self.request(data, 'cc/deal/create/')
+        else:
+            raise ValueError('Please specify params')
+
+    def cc_deal_update(self, deal_id, product_id, contact_id=None, name=None, description=None, amount=None,
+                       member_id=None, funnel_id=None, step_id=None, create_date=None, status=None,
+                       custom_fields: Dict = None, status_change_reason=None, reason_comment=None):
+        if deal_id is not None and product_id is not None and name is not None:
+            data = {"deal_id": deal_id, "product_id": product_id, "name": name}
+            if contact_id is not None:
+                data.update({'contact_id': contact_id})
+            if name is not None:
+                data.update({'name': name})
+            if description is not None:
+                data.update({'description': description})
+            if amount is not None:
+                data.update({'amount': amount})
+            if member_id is not None:
+                data.update({'member_id': member_id})
+            if funnel_id is not None:
+                data.update({'funnel_id': funnel_id})
+            if step_id is not None:
+                data.update({'step_id': step_id})
+            if create_date is not None:
+                data.update({'create_date': create_date})
+            if status is not None:
+                data.update({'status': status})
+            if status_change_reason is not None:
+                data.update({'status_change_reason': status_change_reason})
+            if custom_fields is not None:
+                data.update({'custom_fields': custom_fields})
+            if reason_comment is not None:
+                data.update({'reason_comment': reason_comment})
+            return self.request(data, 'cc/deal/update/')
+        else:
+            raise ValueError('Please specify params')
+
+    def cc_deal_funnels_list(self, product_id):
+        if product_id is not None:
+            data = {"product_id": product_id, }
+            return self.request(data, 'cc/deal/funnels.list/')
         else:
             raise ValueError('Please specify params')
